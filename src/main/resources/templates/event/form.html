@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${event == null ? 'Новое мероприятие' : 'Редактировать'})}"></head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="card-title mb-4"
+              th:text="${event == null ? 'Новое мероприятие' : 'Редактировать мероприятие'}">
+            Мероприятие
+          </h2>
+
+          <form th:action="${event == null ? '/events/new' : '/events/' + event.id + '/edit'}"
+                method="post"
+                enctype="multipart/form-data"
+                th:object="${form}">
+
+            <div class="mb-3">
+              <label for="title" class="form-label">Название</label>
+              <input type="text" id="title" th:field="*{title}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                     placeholder="Название мероприятия" required/>
+              <div class="invalid-feedback" th:errors="*{title}">Ошибка</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Описание</label>
+              <textarea id="description" th:field="*{description}"
+                        class="form-control"
+                        th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
+                        rows="5" placeholder="Расскажите о мероприятии" required></textarea>
+              <div class="invalid-feedback" th:errors="*{description}">Ошибка</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="eventDate" class="form-label">Дата и время</label>
+              <input type="datetime-local" id="eventDate" th:field="*{eventDate}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('eventDate')} ? 'is-invalid'"
+                     required/>
+              <div class="invalid-feedback" th:errors="*{eventDate}">Ошибка</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="price" class="form-label">Стоимость участия (₽)</label>
+                <input type="number" id="price" th:field="*{price}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('price')} ? 'is-invalid'"
+                       min="0" step="0.01"/>
+                <div class="form-text">0 — бесплатное мероприятие</div>
+                <div class="invalid-feedback" th:errors="*{price}">Ошибка</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="maxParticipants" class="form-label">Количество мест</label>
+                <input type="number" id="maxParticipants"
+                       th:field="*{maxParticipants}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('maxParticipants')} ? 'is-invalid'"
+                       min="0"/>
+                <div class="form-text">0 — без ограничений</div>
+                <div class="invalid-feedback" th:errors="*{maxParticipants}">Ошибка</div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="coverImage" class="form-label">Обложка мероприятия</label>
+              <input type="file" id="coverImage" name="coverImage"
+                     class="form-control" accept="image/*"/>
+              <div th:if="${event?.coverImagePath != null}" class="mt-2">
+                <img th:src="@{'/uploads/' + ${event.coverImagePath}}"
+                     class="img-thumbnail" style="max-height:120px;" alt="Текущая обложка"/>
+                <div class="form-text">Загрузите новый файл, чтобы заменить обложку</div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>
+                <span th:text="${event == null ? 'Создать' : 'Сохранить'}">Сохранить</span>
+              </button>
+              <a th:href="${event == null ? '/' : '/events/' + event.id}"
+                 class="btn btn-outline-secondary">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

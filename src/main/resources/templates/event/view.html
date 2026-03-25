@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(${event.title})}"></head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-5">
+
+  <!-- Обложка -->
+  <div th:if="${event.coverImagePath != null}" class="mb-4">
+    <img th:src="@{'/uploads/' + ${event.coverImagePath}}"
+         class="img-fluid rounded shadow-sm w-100 object-fit-cover"
+         style="max-height:400px;" alt="Обложка"/>
+  </div>
+
+  <div class="row g-4">
+    <!-- Основная информация -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <h1 class="h2 mb-0" th:text="${event.title}">Название</h1>
+            <span class="badge bg-secondary"
+                  th:text="${event.status.name()}">Статус</span>
+          </div>
+          <hr/>
+          <p class="lead" th:text="${event.description}">Описание</p>
+
+          <!-- Действия организатора -->
+          <div th:if="${isOrganizer}" class="d-flex flex-wrap gap-2 mt-3">
+            <a th:href="@{/events/{id}/edit(id=${event.id})}"
+               class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-pencil me-1"></i>Редактировать
+            </a>
+            <form th:if="${event.status.name() == 'APPROVED'}"
+                  th:action="@{/events/{id}/complete(id=${event.id})}"
+                  method="post" class="d-inline">
+              <input type="hidden" th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}"/>
+              <button type="submit" class="btn btn-success btn-sm"
+                      onclick="return confirm('Отметить мероприятие как состоявшееся?')">
+                <i class="bi bi-check2-all me-1"></i>Мероприятие состоялось
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Комментарии -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h4 class="mb-3"><i class="bi bi-chat-dots me-2"></i>Комментарии</h4>
+
+          <div id="commentsList">
+            <div th:each="comment : ${comments}" th:id="'comment-' + ${comment.id}"
+                 class="d-flex gap-3 mb-3 pb-3 border-bottom">
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong th:text="${comment.author.username}">Автор</strong>
+                    <span th:if="${comment.isOrganizer}"
+                          class="badge bg-primary ms-1">Организатор</span>
+                    <span th:if="${comment.isParticipant and !comment.isOrganizer}"
+                          class="badge bg-success ms-1">Участник</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted"
+                           th:text="${#temporals.format(comment.createdAt, 'dd.MM.yyyy HH:mm')}">
+                      Дата
+                    </small>
+                    <!-- Кнопка удаления: автор, менеджер или админ -->
+                    <button th:if="${currentUser != null
+                                                    and (currentUser.username == comment.author.username
+                                                    or #authorization.expression('hasRole(''MANAGER'')')
+                                                    or #authorization.expression('hasRole(''ADMIN'')'))}"
+                            class="btn btn-outline-danger btn-sm py-0"
+                            th:data-comment-id="${comment.id}"
+                            onclick="deleteComment(this)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <p class="mb-0 mt-1" th:text="${comment.content}">Текст</p>
+              </div>
+            </div>
+            <div th:if="${#lists.isEmpty(comments)}"
+                 class="text-muted text-center py-3" id="noComments">
+              Комментариев пока нет. Будьте первым!
+            </div>
+          </div>
+
+          <!-- Форма добавления комментария -->
+          <div sec:authorize="isAuthenticated()" class="mt-4">
+            <div class="d-flex gap-2">
+                            <textarea id="commentContent" class="form-control"
+                                      rows="2" placeholder="Написать комментарий..."></textarea>
+              <button class="btn btn-primary align-self-end"
+                      th:data-event-id="${event.id}"
+                      onclick="submitComment(this)">
+                <i class="bi bi-send"></i>
+              </button>
+            </div>
+          </div>
+          <div sec:authorize="!isAuthenticated()" class="mt-3 text-muted small">
+            <a th:href="@{/login}">Войдите</a>, чтобы оставить комментарий.
+          </div>
+        </div>
+      </div>
+
+      <!-- Галерея (только для состоявшихся мероприятий) -->
+      <div th:if="${event.status.name() == 'COMPLETED'}" class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h4 class="mb-3"><i class="bi bi-images me-2"></i>Фотогалерея</h4>
+
+          <div class="row row-cols-2 row-cols-md-3 g-3" id="photoGallery">
+            <div th:each="photo : ${photos}" th:id="'photo-' + ${photo.id}"
+                 class="col">
+              <div class="position-relative">
+                <img th:src="@{'/uploads/' + ${photo.filePath}}"
+                     class="img-fluid rounded" alt="Фото"/>
+                <p th:if="${photo.caption}" class="small text-muted mt-1"
+                   th:text="${photo.caption}">Подпись</p>
+                <button th:if="${currentUser != null
+                                            and (currentUser.username == photo.uploadedBy.username
+                                            or #authorization.expression('hasRole(''MANAGER'')')
+                                            or #authorization.expression('hasRole(''ADMIN'')'))}"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
+                        th:data-photo-id="${photo.id}"
+                        onclick="deletePhoto(this)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Загрузка фото -->
+          <div sec:authorize="isAuthenticated()" class="mt-4" th:if="${isOrganizer or isRegistered}">
+            <h6>Добавить фото</h6>
+            <div class="d-flex gap-2 align-items-end flex-wrap">
+              <div>
+                <input type="file" id="photoFile" class="form-control"
+                       accept="image/*"/>
+              </div>
+              <div class="flex-grow-1">
+                <input type="text" id="photoCaption"
+                       class="form-control" placeholder="Подпись (необязательно)"/>
+              </div>
+              <button class="btn btn-primary"
+                      th:data-event-id="${event.id}"
+                      onclick="uploadPhoto(this)">
+                <i class="bi bi-upload me-1"></i>Загрузить
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="col-lg-4">
+      <!-- Детали мероприятия -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Детали</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2">
+              <i class="bi bi-calendar3 me-2 text-primary"></i>
+              <span th:text="${#temporals.format(event.eventDate, 'dd.MM.yyyy HH:mm')}">Дата</span>
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-person me-2 text-primary"></i>
+              <span th:text="${event.organizer.username}">Организатор</span>
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-cash me-2 text-primary"></i>
+              <span th:if="${event.price.compareTo(T(java.math.BigDecimal).ZERO) == 0}">
+                                Бесплатно
+                            </span>
+              <span th:unless="${event.price.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                    th:text="${event.price} + ' ₽'">Цена</span>
+            </li>
+            <li>
+              <i class="bi bi-people me-2 text-primary"></i>
+              <span th:if="${event.maxParticipants == 0}">Без ограничений</span>
+              <span th:unless="${event.maxParticipants == 0}"
+                    th:text="${event.maxParticipants} + ' мест'">Мест</span>
+            </li>
+          </ul>
+
+          <!-- Запись на мероприятие -->
+          <div sec:authorize="isAuthenticated()"
+               th:if="${event.status.name() == 'APPROVED' and !isOrganizer}">
+            <hr/>
+            <button th:if="${!isRegistered and hasAvailableSlots}"
+                    class="btn btn-primary w-100"
+                    th:data-event-id="${event.id}"
+                    onclick="registerForEvent(this)">
+              <i class="bi bi-calendar-plus me-1"></i>Записаться
+            </button>
+            <button th:if="${isRegistered}"
+                    class="btn btn-outline-danger w-100"
+                    th:data-event-id="${event.id}"
+                    onclick="cancelRegistration(this)">
+              <i class="bi bi-calendar-x me-1"></i>Отменить запись
+            </button>
+            <div th:if="${!isRegistered and !hasAvailableSlots}"
+                 class="alert alert-warning mb-0 text-center">
+              <i class="bi bi-x-circle me-1"></i>Мест нет
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Список участников (для организатора) -->
+      <div th:if="${isOrganizer}" class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-people me-1"></i>Участники
+          </h5>
+          <div th:if="${#lists.isEmpty(participants)}" class="text-muted small">
+            Пока никто не записался.
+          </div>
+          <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(participants)}">
+            <li th:each="reg : ${participants}"
+                th:id="'reg-' + ${reg.id}"
+                class="list-group-item px-0">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span th:text="${reg.user.username}">Участник</span>
+                  <span class="badge ms-1"
+                        th:classappend="${reg.status.name() == 'PAID'} ? 'bg-success'
+                                                       : (${reg.status.name() == 'REJECTED'} ? 'bg-danger'
+                                                       : 'bg-secondary')"
+                        th:text="${reg.status.name()}">Статус</span>
+                </div>
+                <div class="d-flex gap-1"
+                     th:if="${reg.status.name() != 'REJECTED'}">
+                  <button class="btn btn-outline-success btn-sm"
+                          th:data-reg-id="${reg.id}"
+                          title="Отметить как оплатившего"
+                          onclick="markPaid(this)">
+                    <i class="bi bi-currency-dollar"></i>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm"
+                          th:data-reg-id="${reg.id}"
+                          title="Отклонить участника"
+                          onclick="rejectParticipant(this)">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- Передаём CSRF-токен в JS -->
+<div id="csrf"
+     th:data-token="${_csrf.token}"
+     th:data-header="${_csrf.headerName}"
+     style="display:none"></div>
+
+<script th:src="@{/js/event.js}"></script>
+</body>
+</html>

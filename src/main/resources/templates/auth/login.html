@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Вход')}"></head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="card-title text-center mb-4">Вход</h2>
+
+          <div th:if="${param.error}"
+               class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>Неверный логин или пароль.
+          </div>
+          <div th:if="${param.registered}"
+               class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>Регистрация прошла успешно!
+          </div>
+
+          <form th:action="@{/login}" method="post">
+            <div class="mb-3">
+              <label for="username" class="form-label">Логин</label>
+              <input type="text" id="username" name="username"
+                     class="form-control" required autofocus/>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Пароль</label>
+              <input type="password" id="password" name="password"
+                     class="form-control" required/>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Войти
+              </button>
+            </div>
+          </form>
+          <hr/>
+          <p class="text-center mb-0">
+            Нет аккаунта?
+            <a th:href="@{/register}">Зарегистрируйтесь</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
