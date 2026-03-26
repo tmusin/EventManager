@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
+import ru.musintimur.eventmanager.domain.EventStatus
 import ru.musintimur.eventmanager.service.AclService
 import ru.musintimur.eventmanager.service.CommentService
 import ru.musintimur.eventmanager.service.EventService
@@ -62,7 +63,7 @@ class EventController(
         @AuthenticationPrincipal principal: UserDetails?,
         model: Model,
     ): String {
-        val event = eventService.getApprovedById(id)
+        val event = eventService.findById(id)
         val comments = commentService.getByEvent(id)
         val photos = galleryService.getByEvent(id)
         val participants = registrationService.getByEvent(id)
@@ -129,9 +130,21 @@ class EventController(
     @GetMapping("/{id}/edit")
     fun editEventPage(
         @PathVariable id: Long,
+        @AuthenticationPrincipal principal: UserDetails,
         model: Model,
     ): String {
         val event = eventService.findById(id)
+
+        val currentUser = userService.findByUsername(principal.username)
+        val isOrganizer = event.organizer.id == currentUser.id
+        val isAdmin = principal.authorities.any { it.authority == "ROLE_ADMIN" }
+        if (!isOrganizer && !isAdmin) return "redirect:/403"
+
+        // Блокируем редактирование опубликованных и завершённых мероприятий
+        if (event.status == EventStatus.APPROVED || event.status == EventStatus.COMPLETED) {
+            return "redirect:/events/$id"
+        }
+
         val form =
             EventFormDto(
                 title = event.title,
@@ -152,13 +165,25 @@ class EventController(
         @Valid @ModelAttribute("form") form: EventFormDto,
         bindingResult: BindingResult,
         @RequestParam("coverImage") coverImage: MultipartFile?,
+        @AuthenticationPrincipal principal: UserDetails,
         model: Model,
     ): String {
+        val event = eventService.findById(id)
+
+        val currentUser = userService.findByUsername(principal.username)
+        val isOrganizer = event.organizer.id == currentUser.id
+        val isAdmin = principal.authorities.any { it.authority == "ROLE_ADMIN" }
+        if (!isOrganizer && !isAdmin) return "redirect:/403"
+
+        if (event.status == EventStatus.APPROVED || event.status == EventStatus.COMPLETED) {
+            return "redirect:/events/$id"
+        }
+
         if (bindingResult.hasErrors()) {
-            model.addAttribute("event", eventService.findById(id))
+            model.addAttribute("event", event)
             return "event/form"
         }
-        val event = eventService.findById(id)
+
         eventService.update(
             event = event,
             title = form.title,
@@ -178,8 +203,15 @@ class EventController(
     @PostMapping("/{id}/complete")
     fun completeEvent(
         @PathVariable id: Long,
+        @AuthenticationPrincipal principal: UserDetails,
     ): String {
         val event = eventService.findById(id)
+        val currentUser = userService.findByUsername(principal.username)
+        val isOrganizer = event.organizer.id == currentUser.id
+        val isAdmin = principal.authorities.any { it.authority == "ROLE_ADMIN" }
+        if (!isOrganizer && !isAdmin) {
+            return "redirect:/403"
+        }
         eventService.markAsCompleted(event)
         return "redirect:/events/$id"
     }

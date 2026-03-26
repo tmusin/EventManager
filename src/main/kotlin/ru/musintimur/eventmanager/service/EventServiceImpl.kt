@@ -3,7 +3,6 @@ package ru.musintimur.eventmanager.service
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.musintimur.eventmanager.domain.Event
@@ -75,7 +74,6 @@ class EventServiceImpl(
     }
 
     @Transactional
-    @PreAuthorize("hasPermission(#event, 'WRITE') or hasRole('ADMIN')")
     override fun update(
         event: Event,
         title: String,
@@ -123,7 +121,6 @@ class EventServiceImpl(
 
     /** Организатор устанавливает статус "Мероприятие состоялось" */
     @Transactional
-    @PreAuthorize("hasPermission(#event, 'WRITE') or hasRole('ADMIN')")
     override fun markAsCompleted(event: Event): Event {
         require(event.status == EventStatus.APPROVED) {
             "Завершить можно только одобренное мероприятие"

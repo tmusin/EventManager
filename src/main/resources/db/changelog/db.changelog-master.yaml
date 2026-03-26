@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changesets/005-create-gallery.sql
   - include:
       file: db/changelog/changesets/006-create-acl-tables.sql
+  - include:
+      file: db/changelog/changesets/007-fix-acl-object-identity-type.sql

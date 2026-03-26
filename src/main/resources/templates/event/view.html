@@ -28,11 +28,18 @@
           <p class="lead" th:text="${event.description}">Описание</p>
 
           <!-- Действия организатора -->
+          <!-- Действия организатора -->
           <div th:if="${isOrganizer}" class="d-flex flex-wrap gap-2 mt-3">
-            <a th:href="@{/events/{id}/edit(id=${event.id})}"
+            <a th:if="${event.status.name() == 'PENDING' or event.status.name() == 'REJECTED'}"
+               th:href="@{/events/{id}/edit(id=${event.id})}"
                class="btn btn-outline-primary btn-sm">
               <i class="bi bi-pencil me-1"></i>Редактировать
             </a>
+            <span th:if="${event.status.name() == 'APPROVED' or event.status.name() == 'COMPLETED'}"
+                  class="btn btn-outline-secondary btn-sm disabled"
+                  title="Редактирование недоступно для опубликованного мероприятия">
+                  <i class="bi bi-pencil me-1"></i>Редактировать
+                </span>
             <form th:if="${event.status.name() == 'APPROVED'}"
                   th:action="@{/events/{id}/complete(id=${event.id})}"
                   method="post" class="d-inline">

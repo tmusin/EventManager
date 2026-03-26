@@ -6,7 +6,6 @@ plugins {
     kotlin("plugin.jpa") version "1.9.25"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
 }
 
@@ -43,7 +42,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     // Database
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.postgresql:postgresql")
 
     // Liquibase for DB migrations
     implementation("org.liquibase:liquibase-core")
@@ -66,16 +65,8 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.shadowJar {
-    archiveClassifier.set("all")
-    mergeServiceFiles()
-    manifest {
-        attributes["Main-Class"] = "ru.musintimur.eventmanager.EventManagerApplicationKt"
-    }
-}
-
-tasks.build {
-    dependsOn(tasks.shadowJar)
+tasks.bootJar {
+    archiveFileName.set("event-manager.jar")
 }
 
 ktlint {
