@@ -21,8 +21,11 @@ class SecurityConfig {
         http
             .authorizeHttpRequests { auth ->
                 auth
+                    // Служебные пути мероприятий — только для аутентифицированных
+                    .requestMatchers("/events/new", "/events/*/edit", "/events/*/complete")
+                    .authenticated()
                     // Публичный доступ
-                    .requestMatchers("/", "/events/{id}", "/register", "/login")
+                    .requestMatchers("/", "/events/*", "/register", "/login", "/403")
                     .permitAll()
                     .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**")
                     .permitAll()

@@ -1,11 +1,10 @@
 package ru.musintimur.eventmanager
 
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
-class EventManagerApplicationTests {
+class EventManagerApplicationTests : AbstractIntegrationTest() {
     @Test
-    fun contextLoads() {
+    fun `application context loads successfully`() {
+        // Если контекст Spring поднялся — тест прошёл
     }
 }

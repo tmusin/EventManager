@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    # URL подставляется Testcontainers через @DynamicPropertySource
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  thymeleaf:
+    cache: false
+
+app:
+  upload:
+    path: ${java.io.tmpdir}/eventmanager-test-uploads
+  admin:
+    default-password: admin
