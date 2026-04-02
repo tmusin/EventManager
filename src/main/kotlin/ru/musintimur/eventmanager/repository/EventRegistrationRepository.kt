@@ -1,12 +1,15 @@
 package ru.musintimur.eventmanager.repository
 
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import ru.musintimur.eventmanager.domain.EventRegistration
 import ru.musintimur.eventmanager.domain.RegistrationStatus
 
 interface EventRegistrationRepository : JpaRepository<EventRegistration, Long> {
+    @EntityGraph(attributePaths = ["user"])
     fun findAllByEventId(eventId: Long): List<EventRegistration>
 
+    @EntityGraph(attributePaths = ["event", "event.organizer"])
     fun findAllByUserId(userId: Long): List<EventRegistration>
 
     fun findByEventIdAndUserId(
