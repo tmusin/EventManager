@@ -1,14 +1,12 @@
 package ru.musintimur.eventmanager
 
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
 @Testcontainers
 abstract class AbstractIntegrationTest {
     companion object {
@@ -20,7 +18,7 @@ abstract class AbstractIntegrationTest {
                 .withDatabaseName("eventmanager_test")
                 .withUsername("test")
                 .withPassword("test")
-                .also { it.start() } // явный старт без @Container — управляем временем жизни сами
+                .also { it.start() }
 
         @DynamicPropertySource
         @JvmStatic

@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 @Service
 class EventServiceImpl(
     private val eventRepository: EventRepository,
+    private val galleryService: GalleryService,
 ) : EventService {
     companion object {
         const val PAGE_SIZE = 9
@@ -60,6 +61,7 @@ class EventServiceImpl(
         price: BigDecimal,
         maxParticipants: Int,
         organizer: User,
+        tempCoverPath: String?,
     ): Event {
         val event =
             Event(
@@ -70,7 +72,18 @@ class EventServiceImpl(
                 maxParticipants = maxParticipants,
                 organizer = organizer,
             )
-        return eventRepository.save(event)
+        val saved = eventRepository.save(event)
+
+        // Перемещаем временный файл обложки в постоянное место.
+        // Выполняется внутри транзакции: если сохранение упадёт —
+        // транзакция откатится, а файл в temp/ будет удалён контроллером.
+        if (tempCoverPath != null) {
+            val permanentPath = galleryService.promoteTempCoverImage(tempCoverPath, saved)
+            saved.coverImagePath = permanentPath
+            eventRepository.save(saved)
+        }
+
+        return saved
     }
 
     @Transactional

@@ -43,7 +43,7 @@ class CommentServiceImpl(
     }
 
     @Transactional
-    @PreAuthorize("hasPermission(#comment, 'DELETE') or hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasPermission(#comment, 'DELETE')")
     override fun delete(comment: Comment) {
         commentRepository.delete(comment)
     }

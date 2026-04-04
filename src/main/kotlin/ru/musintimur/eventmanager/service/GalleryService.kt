@@ -10,12 +10,39 @@ interface GalleryService {
 
     fun getByEvent(eventId: Long): List<EventPhoto>
 
-    fun upload(
+    /** Сохраняет файл на диск, возвращает относительный путь. Вне транзакции. */
+    fun savePhotoFile(
+        event: Event,
+        file: MultipartFile,
+    ): String
+
+    /** Сохраняет запись о фото в БД. Транзакционно. */
+    fun savePhotoRecord(
         event: Event,
         uploader: User,
-        file: MultipartFile,
+        filePath: String,
         caption: String?,
     ): EventPhoto
+
+    /**
+     * Сохраняет обложку во временную папку до создания мероприятия в БД.
+     * Возвращает временный относительный путь.
+     * После успешного создания мероприятия файл перемещается в постоянное место
+     * внутри [EventService.create].
+     */
+    fun saveTempCoverImage(file: MultipartFile): String
+
+    /**
+     * Перемещает временный файл обложки в постоянное место после получения id мероприятия.
+     * Возвращает постоянный относительный путь.
+     */
+    fun promoteTempCoverImage(
+        tempPath: String,
+        event: Event,
+    ): String
+
+    /** Тихо удаляет файл с диска. Используется для отката при ошибке БД. */
+    fun deleteFileQuietly(relativePath: String)
 
     fun delete(photo: EventPhoto)
 

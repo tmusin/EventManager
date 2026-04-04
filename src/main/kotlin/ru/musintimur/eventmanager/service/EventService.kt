@@ -24,6 +24,7 @@ interface EventService {
         price: BigDecimal,
         maxParticipants: Int,
         organizer: User,
+        tempCoverPath: String? = null,
     ): Event
 
     fun update(

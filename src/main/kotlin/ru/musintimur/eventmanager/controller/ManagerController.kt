@@ -1,6 +1,5 @@
 package ru.musintimur.eventmanager.controller
 
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -9,7 +8,6 @@ import ru.musintimur.eventmanager.service.EventService
 
 @Controller
 @RequestMapping("/manager")
-@PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
 class ManagerController(
     private val eventService: EventService,
 ) {
