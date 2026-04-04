@@ -32,9 +32,15 @@ class SecurityConfig {
                     // Только ADMIN
                     .requestMatchers("/admin/**")
                     .hasRole("ADMIN")
-                    // Только MANAGER
+                    // Менеджерские страницы — MANAGER или ADMIN
                     .requestMatchers("/manager/**")
-                    .hasRole("MANAGER")
+                    .hasAnyRole("MANAGER", "ADMIN")
+                    // Менеджерский API — MANAGER или ADMIN
+                    .requestMatchers("/api/manager/**")
+                    .hasAnyRole("MANAGER", "ADMIN")
+                    // Остальные API — только аутентифицированные
+                    .requestMatchers("/api/**")
+                    .authenticated()
                     // Всё остальное — только аутентифицированные
                     .anyRequest()
                     .authenticated()

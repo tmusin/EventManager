@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
@@ -56,6 +58,8 @@ class EventController(
     private val galleryService: GalleryService,
     private val aclService: AclService,
 ) {
+    private val log: Logger by lazy { LoggerFactory.getLogger(javaClass) }
+
     /** Страница мероприятия (публичная) */
     @GetMapping("/{id}")
     fun eventPage(
@@ -104,26 +108,57 @@ class EventController(
         if (bindingResult.hasErrors()) return "event/form"
 
         val organizer = userService.findByUsername(principal.username)
-        val event =
-            eventService.create(
-                title = form.title,
-                description = form.description,
-                eventDate = form.eventDate!!,
-                price = form.price,
-                maxParticipants = form.maxParticipants,
-                organizer = organizer,
-            )
 
-        if (coverImage != null && !coverImage.isEmpty) {
-            val path = galleryService.saveCoverImage(event, coverImage)
-            eventService.updateCoverImage(event, path)
+        // Шаг 1: сохраняем обложку на диск ДО создания записи в БД.
+        // Если БД недоступна — файл не должен оставаться на диске.
+        // Для этого нам нужен временный путь, который мы передадим в create().
+        // Но id мероприятия ещё неизвестен, поэтому сохраняем во временную папку.
+        val tempCoverPath: String? =
+            if (coverImage != null && !coverImage.isEmpty) {
+                galleryService.saveTempCoverImage(coverImage)
+            } else {
+                null
+            }
+
+        return try {
+            // Шаг 2: создаём запись мероприятия в БД
+            val event =
+                eventService.create(
+                    title = form.title,
+                    description = form.description,
+                    eventDate = form.eventDate!!,
+                    price = form.price,
+                    maxParticipants = form.maxParticipants,
+                    organizer = organizer,
+                    tempCoverPath = tempCoverPath,
+                )
+
+            // Шаг 3: выдаём ACL-права
+            try {
+                aclService.grantOwnerPermissions(event, principal.username)
+                aclService.grantManagerWritePermission(event)
+            } catch (aclEx: Exception) {
+                // Мероприятие создано, но ACL не выдан.
+                // Логируем — администратор сможет восстановить права вручную.
+                // Файл и запись НЕ откатываем: мероприятие существует.
+                log.error(
+                    "Не удалось выдать ACL для мероприятия #${event.id}. Требуется ручное восстановление прав.",
+                    aclEx,
+                )
+            }
+
+            "redirect:/events/${event.id}"
+        } catch (ex: Exception) {
+            // Запись в БД не прошла — удаляем временный файл обложки
+            if (tempCoverPath != null) {
+                log.error(
+                    "Ошибка создания мероприятия в БД, удаляем временный файл обложки: $tempCoverPath",
+                    ex,
+                )
+                galleryService.deleteFileQuietly(tempCoverPath)
+            }
+            throw ex
         }
-
-        // Выдаём ACL-права организатору и менеджерам
-        aclService.grantOwnerPermissions(event, principal.username)
-        aclService.grantManagerWritePermission(event)
-
-        return "redirect:/events/${event.id}"
     }
 
     /** Форма редактирования мероприятия */

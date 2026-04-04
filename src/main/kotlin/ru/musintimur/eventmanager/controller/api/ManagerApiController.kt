@@ -1,7 +1,6 @@
 package ru.musintimur.eventmanager.controller.api
 
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -10,7 +9,6 @@ import ru.musintimur.eventmanager.service.EventService
 
 @RestController
 @RequestMapping("/api/manager")
-@PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
 class ManagerApiController(
     private val eventService: EventService,
 ) {
