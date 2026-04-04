@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: eventmanager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eventmanager
+      POSTGRES_USER: eventmanager
+      POSTGRES_PASSWORD: eventmanager
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5462:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventmanager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: eventmanager-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: eventmanager
+      DB_USER: eventmanager
+      DB_PASSWORD: eventmanager
+      UPLOAD_PATH: /app/uploads
+      ADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "8080:8080"
+
+volumes:
+  pg_data:
+  uploads:

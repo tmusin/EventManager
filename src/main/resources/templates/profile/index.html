@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Личный кабинет')}"></head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-5">
+
+  <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+  <h2 class="mb-4">
+    <i class="bi bi-person-circle me-2"></i>
+    Личный кабинет — <span th:text="${user.username}">username</span>
+  </h2>
+
+  <div class="row g-4">
+
+    <!-- Смена пароля -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-key me-2"></i>Сменить пароль
+          </h5>
+          <form th:action="@{/profile/password}" method="post"
+                th:object="${passwordForm}">
+            <div class="mb-3">
+              <label for="currentPassword" class="form-label">Текущий пароль</label>
+              <input type="password" id="currentPassword"
+                     th:field="*{currentPassword}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('currentPassword')} ? 'is-invalid'"
+                     required/>
+              <div class="invalid-feedback"
+                   th:errors="*{currentPassword}">Ошибка</div>
+            </div>
+            <div class="mb-3">
+              <label for="newPassword" class="form-label">Новый пароль</label>
+              <input type="password" id="newPassword"
+                     th:field="*{newPassword}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('newPassword')} ? 'is-invalid'"
+                     required/>
+              <div class="invalid-feedback"
+                   th:errors="*{newPassword}">Ошибка</div>
+            </div>
+            <div class="mb-4">
+              <label for="newPasswordConfirm" class="form-label">
+                Подтвердите новый пароль
+              </label>
+              <input type="password" id="newPasswordConfirm"
+                     th:field="*{newPasswordConfirm}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('newPasswordConfirm')} ? 'is-invalid'"
+                     required/>
+              <div class="invalid-feedback"
+                   th:errors="*{newPasswordConfirm}">Ошибка</div>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>Сохранить
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Мои мероприятия и записи -->
+    <div class="col-lg-8">
+
+      <!-- Организованные мероприятия -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-calendar-plus me-2"></i>Мои мероприятия
+          </h5>
+          <div th:if="${#lists.isEmpty(organizedEvents)}"
+               class="text-muted small">
+            Вы ещё не создали ни одного мероприятия.
+          </div>
+          <ul class="list-group list-group-flush"
+              th:unless="${#lists.isEmpty(organizedEvents)}">
+            <li th:each="event : ${organizedEvents}"
+                class="list-group-item px-0">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <a th:href="@{/events/{id}(id=${event.id})}"
+                     th:text="${event.title}"
+                     class="fw-semibold text-decoration-none">
+                    Название
+                  </a>
+                  <div class="text-muted small">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    <span th:text="${#temporals.format(event.eventDate, 'dd.MM.yyyy HH:mm')}">
+                        Дата
+                    </span>
+                  </div>
+                </div>
+                <span class="badge"
+                      th:classappend="${event.status.name() == 'APPROVED'} ? 'bg-success'
+                                          : (${event.status.name() == 'REJECTED'} ? 'bg-danger'
+                                          : (${event.status.name() == 'COMPLETED'} ? 'bg-secondary'
+                                          : 'bg-warning text-dark'))"
+                      th:text="${event.status.name()}">
+                    Статус
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Мои записи на мероприятия -->
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-bookmark-check me-2"></i>Мои записи
+          </h5>
+          <div th:if="${#lists.isEmpty(registrations)}"
+               class="text-muted small">
+            Вы ещё не записались ни на одно мероприятие.
+          </div>
+          <ul class="list-group list-group-flush"
+              th:unless="${#lists.isEmpty(registrations)}">
+            <li th:each="reg : ${registrations}"
+                class="list-group-item px-0">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <a th:href="@{/events/{id}(id=${reg.event.id})}"
+                     th:text="${reg.event.title}"
+                     class="fw-semibold text-decoration-none">
+                    Название
+                  </a>
+                  <div class="text-muted small">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    <span th:text="${#temporals.format(reg.event.eventDate, 'dd.MM.yyyy HH:mm')}">
+                        Дата
+                    </span>
+                  </div>
+                </div>
+                <span class="badge"
+                      th:classappend="${reg.status.name() == 'PAID'} ? 'bg-success'
+                                          : (${reg.status.name() == 'REJECTED'} ? 'bg-danger'
+                                          : 'bg-secondary')"
+                      th:text="${reg.status.name()}">
+                    Статус
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

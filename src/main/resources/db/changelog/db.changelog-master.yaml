@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changesets/001-create-users.sql
+  - include:
+      file: db/changelog/changesets/002-create-events.sql
+  - include:
+      file: db/changelog/changesets/003-create-registrations.sql
+  - include:
+      file: db/changelog/changesets/004-create-comments.sql
+  - include:
+      file: db/changelog/changesets/005-create-gallery.sql
+  - include:
+      file: db/changelog/changesets/006-create-acl-tables.sql
+  - include:
+      file: db/changelog/changesets/007-fix-acl-object-identity-type.sql

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Регистрация')}"></head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="card-title text-center mb-4">Регистрация</h2>
+          <form th:action="@{/register}" method="post" th:object="${form}">
+            <div class="mb-3">
+              <label for="username" class="form-label">Логин</label>
+              <input type="text" id="username" th:field="*{username}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'"
+                     required autofocus/>
+              <div class="invalid-feedback"
+                   th:errors="*{username}">Ошибка</div>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Пароль</label>
+              <input type="password" id="password" th:field="*{password}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                     required/>
+              <div class="invalid-feedback"
+                   th:errors="*{password}">Ошибка</div>
+            </div>
+            <div class="mb-3">
+              <label for="passwordConfirm" class="form-label">Подтвердите пароль</label>
+              <input type="password" id="passwordConfirm"
+                     th:field="*{passwordConfirm}"
+                     class="form-control"
+                     th:classappend="${#fields.hasErrors('passwordConfirm')} ? 'is-invalid'"
+                     required/>
+              <div class="invalid-feedback"
+                   th:errors="*{passwordConfirm}">Ошибка</div>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-person-plus me-1"></i>Зарегистрироваться
+              </button>
+            </div>
+          </form>
+          <hr/>
+          <p class="text-center mb-0">
+            Уже есть аккаунт? <a th:href="@{/login}">Войти</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
